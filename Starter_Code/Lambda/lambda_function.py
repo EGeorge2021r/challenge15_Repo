@@ -126,6 +126,38 @@ def recommend_portfolio(intent_request):
 
     # YOUR CODE GOES HERE!
 
+# perform function for recommend Portfolio
+    if age is not None: 
+            age = parse_int(
+            age
+        )# Since parameters are strings it's important to cast values
+            if age <= 0:
+                return build_validation_result(
+                    False,
+                    "age",
+                    "The age should be greater than zero, "
+                    "please provide a correct age.",
+                )
+
+    # A True results is returned if age is valid
+            return build_validation_result(True, None, None)
+    if parse_int(age)>0 and parse_int(age)<65:
+        if parse_int(investment_amount)>=5000:
+            #* **none:** "100% bonds (AGG), 0% equities (SPY)"
+            if risk_level is None: return({"status":1, "message": f"congrats {first_name}, I will recommend 100% bonds (AGG), 0% equities (SPY)"})
+            #* **low:** "60% bonds (AGG), 40% equities (SPY)"
+            if "LOW" in risk_level.upper(): return({"status":1, "message": f"congrats {first_name}, I will recommend 60% bonds (AGG), 40% equities (SPY)"})
+            #* **medium:** "40% bonds (AGG), 60% equities (SPY)"
+            if "MEDIUM" in risk_level.upper(): return({"status":1, "message": f"congrats {first_name}, I will recommend 40% bonds (AGG), 60% equities (SPY)"})
+            #* **high:** "20% bonds (AGG), 80% equities (SPY)"
+            if "HIGH" in risk_level.upper(): return({"status":1, "message": f"congrats {first_name}, I will recommend 20% bonds (AGG), 80% equities (SPY)"})
+            return({"status":0, "message": "re-enter risk level (low, medium, high)"})
+        else:
+            return({"status":0, "message": "Sorry your investment amount is too small"})
+    else:
+        return({"status":0, "message": "Sorry your age is not within accepatable age range"})
+
+
 
 ### Intents Dispatcher ###
 def dispatch(intent_request):
@@ -137,16 +169,60 @@ def dispatch(intent_request):
 
     # Dispatch to bot's intent handlers
     if intent_name == "recommendPortfolio":
-        return recommend_portfolio(intent_request)
-
+        dict_message = recommend_portfolio(intent_request)
+        status_code = dict_message["status"]
+        # Return a message 
+        
+        if status_code ==1:
+            return close(
+                intent_request["sessionAttributes"],
+                "Fulfilled",
+                {
+                    "contentType": "PlainText",
+                    "content":dict_message["message"]
+                }
+            )
+        else:
+            return close(
+                intent_request["sessionAttributes"],
+                "Fulfilled",
+                {
+                    "contentType": "PlainText",
+                    "content":"error: " + dict_message["message"]
+                }
+            )
     raise Exception("Intent with name " + intent_name + " not supported")
 
 
 ### Main Handler ###
-def lambda_handler(event, context):
+def lambda_handler(event):
     """
     Route the incoming request based on intent.
     The JSON body of the request is provided in the event slot.
     """
 
     return dispatch(event)
+    
+"""txt_json = {
+  "messageVersion": "1.0",
+  "invocationSource": "DialogCodeHook",
+  "userId": "John",
+  "sessionAttributes": {},
+  "bot": {
+    "name": "RoboAdvisor",
+    "alias": "$LATEST",
+    "version": "$LATEST"
+  },
+  "outputDialogMode": "Text",
+  "currentIntent": {
+    "name": "recommendPortfolio",
+    "slots": {
+      "firstName": "John",
+      "age": "40",
+      "riskLevel": "Low",
+      "investmentAmount": "5000"
+    },
+    "confirmationStatus": "None"
+  }
+}
+print(lambda_handler(txt_json))"""
